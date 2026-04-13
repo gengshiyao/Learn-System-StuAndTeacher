@@ -27,7 +27,7 @@
     </el-form>
 
     <el-table :data="kps" @row-click="openDrawer">
-      <el-table-column prop="id" label="编号" width="80" />
+      <el-table-column type="index" label="编号" width="80" :index="courseLocalIndex" />
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="difficulty" label="难度" width="120" />
       <el-table-column prop="est_minutes" label="预计分钟" width="120" />
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { api } from "../../api";
 
 const courses = ref<any[]>([]);
@@ -126,6 +126,17 @@ const save = async () => {
 const refresh = async () => {
   await loadKps();
 };
+
+/** 与种子数据一致：Python基础 1–15，Python进阶 16–30，Python拓展 31–36 */
+const globalKpIndexOffset = computed(() => {
+  const c = courses.value.find((x) => x.id === courseId.value);
+  const name = c?.name || "";
+  if (name === "Python进阶") return 15;
+  if (name === "Python拓展") return 30;
+  return 0;
+});
+
+const courseLocalIndex = (index: number) => index + 1 + globalKpIndexOffset.value;
 
 onMounted(async () => {
   await loadCourses();

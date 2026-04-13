@@ -20,6 +20,7 @@ def list_kps():
     limit, offset = get_pagination_args(request)
     kps = (
         KnowledgePoint.query.filter_by(course_id=course_id)
+        .order_by(KnowledgePoint.id)
         .offset(offset)
         .limit(limit)
         .all()

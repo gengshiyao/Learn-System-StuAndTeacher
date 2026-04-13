@@ -15,7 +15,7 @@ bp = Blueprint("courses", __name__)
 @jwt_required(optional=True)
 def list_courses():
     limit, offset = get_pagination_args(request)
-    courses = Course.query.offset(offset).limit(limit).all()
+    courses = Course.query.order_by(Course.id).offset(offset).limit(limit).all()
     return ok([c.to_dict() for c in courses])
 
 

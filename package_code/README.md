@@ -35,8 +35,10 @@ MYSQL_URL=mysql+pymysql://root:你的密码@127.0.0.1:3306/learning_path?charset
 mysql -uroot -p你的密码 -e "CREATE DATABASE IF NOT EXISTS learning_path DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 # 导入表结构（PowerShell）
 Get-Content schema.sql | mysql -uroot -p你的密码 learning_path
-# 写入种子数据
+# 写入种子数据（默认三门课程：Python基础 知识点 1–15、Python进阶 16–30、Python拓展 31–36）
 python seed.py
+# 若库中仍是「一门课 + 36 知识点」旧结构，可在同一目录执行迁移（幂等）：
+python migrate_split_python_courses.py
 ```
 
 6) 启动后端：
