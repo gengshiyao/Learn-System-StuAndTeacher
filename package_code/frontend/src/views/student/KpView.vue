@@ -93,7 +93,10 @@ const loading = ref(true);
 const score = ref(80);
 const timerRunning = ref(false);
 const elapsed = ref(0);
+const activeResourceId = ref<number | null>(null);
 let timer: number | null = null;
+
+const currentResourceId = () => activeResourceId.value ?? resources.value[0]?.id;
 
 const timerText = ref("00:00");
 const updateTimerText = () => {
@@ -120,7 +123,7 @@ const finishTimer = async () => {
   if (!elapsed.value) return;
   await api.createEvent({
     kp_id: kpId,
-    resource_id: resources.value[0]?.id,
+    resource_id: currentResourceId(),
     event_type: "complete_resource",
     duration_sec: elapsed.value
   });
@@ -133,7 +136,7 @@ const finishTimer = async () => {
 const completeExercise = async () => {
   await api.createEvent({
     kp_id: kpId,
-    resource_id: resources.value[0]?.id,
+    resource_id: currentResourceId(),
     event_type: "complete_exercise",
     duration_sec: 300
   });
@@ -164,6 +167,10 @@ const cacheEvent = (eventType: string, duration: number) => {
 
 const selectResource = (res: any) => {
   window.open(res.url, "_blank");
+  activeResourceId.value = res.id;
+  if (!timerRunning.value) {
+    startTimer();
+  }
 };
 
 const openKp = (id: number) => {
@@ -172,6 +179,10 @@ const openKp = (id: number) => {
 
 const loadData = async () => {
   loading.value = true;
+  pauseTimer();
+  elapsed.value = 0;
+  activeResourceId.value = null;
+  updateTimerText();
   const courses = await api.courses();
   const courseId = courses.data.data[0]?.id;
   if (!courseId) return;
