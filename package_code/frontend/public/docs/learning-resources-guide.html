@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>学习资源与外链说明</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --border: #e5e5e5;
+      --bg: #fafafa;
+      --accent: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+      color: var(--text);
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      background: var(--bg);
+    }
+    h1 { font-size: 1.5rem; margin-top: 0; }
+    h2 { font-size: 1.15rem; margin-top: 1.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.35rem; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 12px 0; background: #fff; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; }
+    code { background: #eee; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.88em; }
+    a { color: var(--accent); }
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .note { background: #eff6ff; border-left: 4px solid var(--accent); padding: 10px 14px; margin: 1rem 0; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <h1>学习资源与外链说明</h1>
+  <p class="muted">本文档说明：<strong>学习仪表盘 → 知识点速览 → 查看详情 → 资源列表</strong> 中出现的链接为何指向外网、系统如何加载与打开链接，以及如何改为校内或自建资源地址。</p>
+
+  <h2>1. 功能路径与界面行为</h2>
+  <table>
+    <thead><tr><th>步骤</th><th>位置</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>学生端「学习仪表盘」</td><td>在「知识点速览」区域看到若干知识点卡片。</td></tr>
+      <tr><td>2</td><td>知识点卡片</td><td>点击<strong>「查看详情」</strong>。</td></tr>
+      <tr><td>3</td><td>知识点详情页（<code>/student/kp/:id</code>）</td><td>展示掌握度、先修/后继与<strong>「资源列表」</strong>。</td></tr>
+      <tr><td>4</td><td>资源卡片</td><td>点击<strong>「开始使用」</strong>会在<strong>新标签页</strong>打开该资源的 URL。</td></tr>
+    </tbody>
+  </table>
+  <p>资源数据来自数据库中的 <code>url</code> 字段；前端使用 <code>window.open</code> 打开，可为任意合法 HTTP(S) 地址或本站相对路径（如本页）。</p>
+
+  <h2>2. 为何默认有「外网」链接</h2>
+  <p>种子数据会为每个知识点生成示例文档与练习，其链接指向哔哩哔哩站内搜索，用于演示而无需在本项目内托管大量课件。若无法访问外网，这些链接可能无法打开。</p>
+  <p class="note">本页为<strong>站内文档</strong>，不依赖外网，可在无公网环境下阅读说明。</p>
+
+  <h2>3. 数据从哪里来</h2>
+  <p>资源存储在表 <strong>Resource</strong> 中（<code>kp_id</code>、<code>type</code>、<code>title</code>、<code>url</code> 等）。学生端按知识点拉取列表并原样打开 <code>url</code>。</p>
+
+  <h2>4. 如何改为内网或自有资源</h2>
+  <ul>
+    <li><strong>教师/管理员</strong>：通过资源 REST API 创建或更新资源，将 <code>url</code> 改为校内课件、LMS、对象存储等地址。</li>
+    <li><strong>开发环境</strong>：可修改 <code>backend/seed.py</code> 中生成资源的逻辑；注意重复执行种子与生产数据冲突问题。</li>
+    <li><strong>数据库</strong>：直接更新 <code>resource</code> 表的 <code>url</code> 列。</li>
+  </ul>
+
+  <h2>5. 使用与合规提示</h2>
+  <ul>
+    <li>外网链接依赖网络策略；内网或离线环境请配置内网 <code>url</code>。</li>
+    <li>外链版权与条款以第三方平台为准；正式开课建议使用已授权或自有资源。</li>
+    <li>本项目前端未做域名白名单，录入链接时请做好审核。</li>
+  </ul>
+
+  <h2>6. 相关代码位置</h2>
+  <table>
+    <thead><tr><th>说明</th><th>路径</th></tr></thead>
+    <tbody>
+      <tr><td>仪表盘知识点速览</td><td><code>frontend/src/views/student/DashboardView.vue</code></td></tr>
+      <tr><td>查看详情按钮</td><td><code>frontend/src/components/cards/KpCard.vue</code></td></tr>
+      <tr><td>资源列表与打开链接</td><td><code>frontend/src/views/student/KpView.vue</code></td></tr>
+      <tr><td>种子外链</td><td><code>backend/seed.py</code>（<code>create_resources_and_assessments</code>）</td></tr>
+      <tr><td>资源 API</td><td><code>backend/app/routes/resources.py</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. 小结</h2>
+  <p>资源是否为外网由数据库 <code>url</code> 决定；默认种子含哔哩哔哩搜索链接。本站说明文档路径为 <code>/docs/learning-resources-guide.html</code>，可作为不依赖外网的参考资源。</p>
+
+  <hr />
+  <p class="muted">与仓库 <code>docs/学习资源与外链说明.md</code> 内容一致；静态页便于在资源列表中直接打开。</p>
+</body>
+</html>

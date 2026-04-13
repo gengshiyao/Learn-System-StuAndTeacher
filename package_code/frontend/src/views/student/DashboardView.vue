@@ -152,35 +152,41 @@ const loadCourses = async () => {
 };
 
 const loadDashboard = async () => {
-  if (!courseId.value) return;
-  loading.value = true;
-  const [kpResp, masteryResp, pathResp] = await Promise.all([
-    api.kps(courseId.value),
-    api.mastery(courseId.value),
-    api.latestPath(courseId.value)
-  ]);
-  kps.value = kpResp.data.data;
-  mastery.value = masteryResp.data.data;
-  const pathData = pathResp.data.data;
-  if (pathData && pathData.items) {
-    localStorage.setItem("latest_path_items", JSON.stringify(pathData.items));
-    const kpMap = new Map(kps.value.map((k: any) => [k.id, k]));
-    latestPathItems.value = pathData.items
-      .slice(0, 6)
-      .map((item: any) => kpMap.get(item.kp_id))
-      .filter(Boolean);
-    const weeks = JSON.parse(localStorage.getItem("latest_weeks") || "[]");
-    weekSummary.value = weeks.length ? `${weeks.length} 周` : "未生成周计划";
-    const masteryMap = new Map(mastery.value.map((m: any) => [m.kp_id, m.mastery_value]));
-    const firstWeak = pathData.items.find((item: any) => (masteryMap.get(item.kp_id) || 0.2) < 0.7);
-    canContinue.value = !!firstWeak;
-  } else {
-    latestPathItems.value = [];
-    weekSummary.value = "未生成周计划";
-    canContinue.value = false;
+  if (!courseId.value) {
+    loading.value = false;
+    return;
   }
-  refreshStats();
-  loading.value = false;
+  loading.value = true;
+  try {
+    const [kpResp, masteryResp, pathResp] = await Promise.all([
+      api.kps(courseId.value),
+      api.mastery(courseId.value),
+      api.latestPath(courseId.value)
+    ]);
+    kps.value = kpResp.data.data;
+    mastery.value = masteryResp.data.data;
+    const pathData = pathResp.data.data;
+    if (pathData && pathData.items) {
+      localStorage.setItem("latest_path_items", JSON.stringify(pathData.items));
+      const kpMap = new Map(kps.value.map((k: any) => [k.id, k]));
+      latestPathItems.value = pathData.items
+        .slice(0, 6)
+        .map((item: any) => kpMap.get(item.kp_id))
+        .filter(Boolean);
+      const weeks = JSON.parse(localStorage.getItem("latest_weeks") || "[]");
+      weekSummary.value = weeks.length ? `${weeks.length} 周` : "未生成周计划";
+      const masteryMap = new Map(mastery.value.map((m: any) => [m.kp_id, m.mastery_value]));
+      const firstWeak = pathData.items.find((item: any) => (masteryMap.get(item.kp_id) || 0.2) < 0.7);
+      canContinue.value = !!firstWeak;
+    } else {
+      latestPathItems.value = [];
+      weekSummary.value = "未生成周计划";
+      canContinue.value = false;
+    }
+    refreshStats();
+  } finally {
+    loading.value = false;
+  }
 };
 
 const refreshStats = () => {
@@ -270,8 +276,12 @@ const eventLabel = (value: string) => {
 };
 
 onMounted(async () => {
-  await loadCourses();
-  await loadDashboard();
+  try {
+    await loadCourses();
+    await loadDashboard();
+  } catch {
+    loading.value = false;
+  }
 });
 
 watch(courseId, async () => {
