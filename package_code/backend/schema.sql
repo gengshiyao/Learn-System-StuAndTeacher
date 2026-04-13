@@ -1,0 +1,136 @@
+CREATE TABLE IF NOT EXISTS user (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('student','teacher','admin') NOT NULL DEFAULT 'student',
+  major VARCHAR(64) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS course (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(128) NOT NULL,
+  description TEXT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS knowledge_point (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  difficulty INT NOT NULL,
+  est_minutes INT NOT NULL,
+  tags VARCHAR(255) NULL,
+  description TEXT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_kp_course FOREIGN KEY (course_id) REFERENCES course(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS kp_prereq (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  kp_id INT NOT NULL,
+  prereq_kp_id INT NOT NULL,
+  CONSTRAINT fk_prereq_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id),
+  CONSTRAINT fk_prereq_req FOREIGN KEY (prereq_kp_id) REFERENCES knowledge_point(id),
+  CONSTRAINT chk_kp_not_self CHECK (kp_id <> prereq_kp_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS resource (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  kp_id INT NOT NULL,
+  type ENUM('video','doc','exercise','quiz') NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  url VARCHAR(512) NOT NULL,
+  difficulty INT NOT NULL,
+  est_minutes INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_resource_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS assessment (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  kp_id INT NOT NULL,
+  type ENUM('quiz') NOT NULL,
+  total_score INT NOT NULL DEFAULT 100,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_assessment_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS assessment_item (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  assessment_id INT NOT NULL,
+  question TEXT NOT NULL,
+  options_json TEXT NULL,
+  answer VARCHAR(255) NULL,
+  score INT NOT NULL,
+  CONSTRAINT fk_item_assessment FOREIGN KEY (assessment_id) REFERENCES assessment(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS assessment_record (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  assessment_id INT NOT NULL,
+  score INT NOT NULL,
+  submit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_record_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_record_assessment FOREIGN KEY (assessment_id) REFERENCES assessment(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS learning_event (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  kp_id INT NOT NULL,
+  resource_id INT NULL,
+  event_type ENUM('view','complete_exercise','complete_resource') NOT NULL,
+  duration_sec INT NOT NULL,
+  ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_event_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_event_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id),
+  CONSTRAINT fk_event_resource FOREIGN KEY (resource_id) REFERENCES resource(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS mastery (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  kp_id INT NOT NULL,
+  mastery_value DECIMAL(4,3) NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_mastery_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_mastery_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS learning_path (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  course_id INT NOT NULL,
+  version INT NOT NULL,
+  strategy_snapshot TEXT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_path_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_path_course FOREIGN KEY (course_id) REFERENCES course(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS learning_path_item (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  path_id INT NOT NULL,
+  seq INT NOT NULL,
+  kp_id INT NOT NULL,
+  required_flag TINYINT NOT NULL,
+  CONSTRAINT fk_path_item_path FOREIGN KEY (path_id) REFERENCES learning_path(id),
+  CONSTRAINT fk_path_item_kp FOREIGN KEY (kp_id) REFERENCES knowledge_point(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS teacher_strategy (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  params_json TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_strategy_course FOREIGN KEY (course_id) REFERENCES course(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
