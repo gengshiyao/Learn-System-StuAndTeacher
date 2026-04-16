@@ -121,15 +121,42 @@ def create_resources_and_assessments(kps):
             difficulty=kp.difficulty,
             est_minutes=max(5, kp.est_minutes // 2),
         )
-        guide = Resource(
-            kp_id=kp.id,
-            type="doc",
-            title="学习资源与外链说明（本项目文档）",
-            url="/docs/learning-resources-guide.html",
-            difficulty=1,
-            est_minutes=8,
-        )
-        db.session.add_all([doc, exercise, guide])
+        guide_url = "/docs/learning-resources-guide.html"
+        guide_bundle = [
+            Resource(
+                kp_id=kp.id,
+                type="doc",
+                title=f"{kp.name} 文档1",
+                url=guide_url,
+                difficulty=1,
+                est_minutes=8,
+            ),
+            Resource(
+                kp_id=kp.id,
+                type="doc",
+                title=f"{kp.name} 文档2",
+                url=guide_url,
+                difficulty=1,
+                est_minutes=8,
+            ),
+            Resource(
+                kp_id=kp.id,
+                type="exercise",
+                title=f"{kp.name} 练习1",
+                url=guide_url,
+                difficulty=1,
+                est_minutes=8,
+            ),
+            Resource(
+                kp_id=kp.id,
+                type="exercise",
+                title=f"{kp.name} 练习2",
+                url=guide_url,
+                difficulty=1,
+                est_minutes=8,
+            ),
+        ]
+        db.session.add_all([doc, exercise, *guide_bundle])
 
         assessment = Assessment(kp_id=kp.id, type="quiz", total_score=100)
         db.session.add(assessment)
